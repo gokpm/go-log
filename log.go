@@ -45,7 +45,6 @@ func Init(ctx context.Context, config *Config) error {
 		log.WithResource(mergedResource),
 		log.WithProcessor(processor),
 	}
-	provider := log.NewLoggerProvider(providerOpts...)
-	_ = provider.Logger(config.Name)
+	_ = log.NewLoggerProvider(providerOpts...).Logger(config.Name)
 	return nil
 }
