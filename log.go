@@ -12,12 +12,16 @@ import (
 )
 
 type Config struct {
+	Ok          bool
 	Name        string
 	Environment string
 	URL         string
 }
 
 func Setup(ctx context.Context, config *Config) (olog.Logger, error) {
+	if !config.Ok {
+		return nil, nil
+	}
 	httpOpts := []otlploghttp.Option{
 		otlploghttp.WithEndpointURL(config.URL),
 		otlploghttp.WithCompression(otlploghttp.GzipCompression),
