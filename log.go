@@ -3,6 +3,7 @@ package log
 import (
 	"context"
 	"os"
+	"time"
 
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	olog "go.opentelemetry.io/otel/log"
@@ -10,6 +11,9 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.34.0"
 )
+
+var ok bool
+var provider *log.LoggerProvider
 
 type Config struct {
 	Ok          bool
@@ -19,7 +23,8 @@ type Config struct {
 }
 
 func Setup(ctx context.Context, config *Config) (olog.Logger, error) {
-	if !config.Ok {
+	ok = config.Ok
+	if !ok {
 		return nil, nil
 	}
 	httpOpts := []otlploghttp.Option{
@@ -50,5 +55,19 @@ func Setup(ctx context.Context, config *Config) (olog.Logger, error) {
 		log.WithResource(mergedResource),
 		log.WithProcessor(processor),
 	}
-	return log.NewLoggerProvider(providerOpts...).Logger(config.Name), nil
+	provider = log.NewLoggerProvider(providerOpts...)
+	return provider.Logger(config.Name), nil
+}
+
+func Shutdown(timeout time.Duration) error {
+	if !ok {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.TODO(), timeout)
+	defer cancel()
+	err := provider.Shutdown(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }
