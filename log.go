@@ -20,9 +20,10 @@ type Config struct {
 	Name        string
 	Environment string
 	URL         string
+	DialTimeout time.Duration
 }
 
-func Setup(ctx context.Context, config *Config) (olog.Logger, error) {
+func Setup(config *Config) (olog.Logger, error) {
 	ok = config.Ok
 	if !ok {
 		return nil, nil
@@ -31,6 +32,8 @@ func Setup(ctx context.Context, config *Config) (olog.Logger, error) {
 		otlploghttp.WithEndpointURL(config.URL),
 		otlploghttp.WithCompression(otlploghttp.GzipCompression),
 	}
+	ctx, cancel := context.WithTimeout(context.TODO(), config.DialTimeout)
+	defer cancel()
 	exporter, err := otlploghttp.New(ctx, httpOpts...)
 	if err != nil {
 		return nil, err
